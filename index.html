@@ -1,0 +1,763 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#fff7ec">
+<title>Dog Snake — Aventura Pet</title>
+<style>
+:root {
+  --cream: #fff7ec;
+  --paper: #ffffff;
+  --brown: #543b32;
+  --muted: #947b6c;
+  --orange: #ff9657;
+  --orange-dark: #e9763b;
+  --green: #dff0d4;
+  --pink: #ffb6b9;
+  --shadow: 0 12px 35px rgba(91, 58, 38, .10);
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(ellipse at 8% 10%, #ffe7cf 0, transparent 35%),
+    radial-gradient(ellipse at 92% 85%, #e5f1d9 0, transparent 35%),
+    var(--cream);
+  color: var(--brown);
+  font-family: "Trebuchet MS", Arial, sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 22px 14px;
+}
+button { font: inherit; touch-action: manipulation; }
+.app { width: min(100%, 570px); }
+.topline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.brand { display: flex; align-items: center; gap: 11px; }
+.brand-icon {
+  width: 51px; height: 51px;
+  display: grid; place-items: center;
+  font-size: 29px;
+  background: #ffe1bd;
+  border-radius: 17px;
+  box-shadow: 0 5px 0 #f3c99d;
+}
+h1 { margin: 0; font-size: clamp(22px, 5vw, 30px); letter-spacing: -1px; }
+.subtitle { color: var(--muted); font-size: 12px; margin-top: 4px; }
+.pill {
+  border-radius: 99px;
+  padding: 9px 12px;
+  background: white;
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px #543b3210;
+}
+.stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.stat {
+  background: var(--paper);
+  border: 1px solid #f5e8dc;
+  border-radius: 18px;
+  padding: 12px 16px;
+  box-shadow: var(--shadow);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.stat-label { font-size: 11px; color: var(--muted); font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
+.stat-number { font-size: 26px; font-weight: 900; line-height: 1.2; }
+.stat-emoji { font-size: 23px; }
+.game-card {
+  background: white;
+  border-radius: 25px;
+  padding: 10px;
+  box-shadow: var(--shadow);
+  border: 1px solid #f5e8dc;
+}
+.canvas-wrap {
+  position: relative;
+  overflow: hidden;
+  border-radius: 18px;
+  background: #edf5e6;
+  width: 100%;
+  aspect-ratio: 1;
+}
+canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+}
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  background: rgba(247, 247, 226, .78);
+  backdrop-filter: blur(4px);
+  text-align: center;
+}
+.overlay.hidden { display: none; }
+.modal {
+  width: min(100%, 320px);
+  padding: 24px 19px;
+  background: rgba(255,255,255,.96);
+  border: 2px solid white;
+  border-radius: 25px;
+  box-shadow: 0 14px 35px #543b321a;
+  animation: pop .3s ease-out;
+}
+@keyframes pop {
+  from { transform: scale(.88); opacity: .5; }
+  to { transform: scale(1); opacity: 1; }
+}
+.hero-dog { font-size: 63px; line-height: 1.3; }
+.modal h2 { margin: 7px 0 8px; font-size: 25px; }
+.modal p { color: var(--muted); font-size: 13px; line-height: 1.6; margin: 0 0 17px; }
+.primary, .secondary {
+  border: 0;
+  border-radius: 14px;
+  min-height: 47px;
+  padding: 12px 17px;
+  font-weight: 900;
+  cursor: pointer;
+  transition: transform .15s, filter .15s;
+}
+.primary {
+  background: var(--orange);
+  color: #4b2b1b;
+  box-shadow: 0 4px 0 var(--orange-dark);
+}
+.secondary {
+  background: white;
+  color: var(--brown);
+  border: 1px solid #eddfd2;
+}
+.primary:hover, .secondary:hover { filter: brightness(1.03); transform: translateY(-1px); }
+.primary:active, .secondary:active { transform: translateY(2px); }
+.primary:focus-visible, .secondary:focus-visible, .direction:focus-visible {
+  outline: 3px solid #7b9e62;
+  outline-offset: 3px;
+}
+.primary.full { width: 100%; }
+.controls-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+}
+.controls-row button { flex: 1; }
+.dpad-area {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 14px;
+}
+.hint { font-size: 11px; line-height: 1.7; color: var(--muted); }
+.dpad {
+  display: grid;
+  grid-template-columns: repeat(3, 44px);
+  grid-template-rows: repeat(2, 42px);
+  gap: 5px;
+  flex-shrink: 0;
+}
+.direction {
+  border: 1px solid #f1dfcd;
+  background: white;
+  border-radius: 12px;
+  color: var(--brown);
+  font-size: 19px;
+  font-weight: 900;
+  box-shadow: 0 3px 0 #ebded0;
+  cursor: pointer;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.direction:active { background: #ffe4c9; transform: translateY(2px); box-shadow: none; }
+.up { grid-column: 2; grid-row: 1; }
+.left { grid-column: 1; grid-row: 2; }
+.down { grid-column: 2; grid-row: 2; }
+.right { grid-column: 3; grid-row: 2; }
+.footer {
+  text-align: center;
+  color: var(--muted);
+  font-size: 11px;
+  padding-top: 16px;
+}
+kbd {
+  background: white;
+  border: 1px solid #e8d9ca;
+  border-radius: 5px;
+  padding: 2px 5px;
+  color: var(--brown);
+  font: inherit;
+  font-weight: 800;
+}
+@media (max-width: 420px) {
+  body { padding: 13px 10px; align-items: flex-start; }
+  .brand-icon { width: 43px; height: 43px; font-size: 25px; border-radius: 14px; }
+  .pill { padding: 8px 9px; font-size: 10px; }
+  .stat { padding: 10px 12px; }
+  .stat-number { font-size: 23px; }
+  .game-card { padding: 7px; border-radius: 19px; }
+  .canvas-wrap { border-radius: 14px; }
+  .dpad { grid-template-columns: repeat(3, 40px); grid-template-rows: repeat(2, 38px); }
+  .hint { font-size: 10px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
+</style>
+</head>
+<body>
+<main class="app">
+  <header class="topline">
+    <div class="brand">
+      <div class="brand-icon" aria-hidden="true">🐶</div>
+      <div>
+        <h1>Dog Snake</h1>
+        <div class="subtitle">Uma aventura cheia de petiscos!</div>
+      </div>
+    </div>
+    <div class="pill">🐾 AVENTURA PET</div>
+  </header>
+
+  <section class="stats" aria-label="Placar">
+    <div class="stat">
+      <div><div class="stat-label">Pontuação</div><div class="stat-number" id="score">0</div></div>
+      <div class="stat-emoji">🍪</div>
+    </div>
+    <div class="stat">
+      <div><div class="stat-label">Seu recorde</div><div class="stat-number" id="best">0</div></div>
+      <div class="stat-emoji">🏆</div>
+    </div>
+  </section>
+
+  <section class="game-card" aria-label="Jogo Dog Snake">
+    <div class="canvas-wrap" id="canvasWrap">
+      <canvas id="game" width="600" height="600" aria-label="Tabuleiro do jogo. Use as setas ou WASD para movimentar o cachorrinho."></canvas>
+      <div class="overlay" id="overlay">
+        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+          <div class="hero-dog" id="modalEmoji">🐶</div>
+          <h2 id="modalTitle">Bora brincar?</h2>
+          <p id="modalText">Ajude o cãozinho a pegar os biscoitos. Quanto mais ele come, maior fica! Mas cuidado com as paredes e com o próprio rabinho.</p>
+          <button class="primary full" id="startBtn">Começar aventura ▶</button>
+        </div>
+      </div>
+    </div>
+    <div class="controls-row">
+      <button class="secondary" id="pauseBtn" disabled>Ⅱ Pausar</button>
+      <button class="secondary" id="restartBtn">↻ Reiniciar</button>
+    </div>
+    <div class="dpad-area">
+      <div class="hint">
+        <strong>Como jogar</strong><br>
+        <kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd> ou <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd><br>
+        <kbd>Espaço</kbd> para pausar
+      </div>
+      <div class="dpad" aria-label="Controles direcionais">
+        <button class="direction up" data-dir="up" aria-label="Mover para cima">▲</button>
+        <button class="direction left" data-dir="left" aria-label="Mover para esquerda">◀</button>
+        <button class="direction down" data-dir="down" aria-label="Mover para baixo">▼</button>
+        <button class="direction right" data-dir="right" aria-label="Mover para direita">▶</button>
+      </div>
+    </div>
+  </section>
+  <div class="footer">Feito com carinho e muitos petiscos 🦴 · Dog Snake</div>
+</main>
+
+<script>
+(() => {
+  "use strict";
+
+  const canvas = document.getElementById("game");
+  const ctx = canvas.getContext("2d");
+  const overlay = document.getElementById("overlay");
+  const modalEmoji = document.getElementById("modalEmoji");
+  const modalTitle = document.getElementById("modalTitle");
+  const modalText = document.getElementById("modalText");
+  const startBtn = document.getElementById("startBtn");
+  const pauseBtn = document.getElementById("pauseBtn");
+  const restartBtn = document.getElementById("restartBtn");
+  const scoreEl = document.getElementById("score");
+  const bestEl = document.getElementById("best");
+
+  const CELLS = 25;
+  const SIZE = canvas.width / CELLS;
+  const DIRECTIONS = {
+    up:    { x: 0, y: -1 },
+    down:  { x: 0, y: 1 },
+    left:  { x: -1, y: 0 },
+    right: { x: 1, y: 0 }
+  };
+
+  let dog = [];
+  let direction = { ...DIRECTIONS.right };
+  let nextDirection = { ...DIRECTIONS.right };
+  let food = null;
+  let score = 0;
+  let best = loadBest();
+  let gameState = "ready";
+  let timerId = null;
+  let lastTick = 0;
+  let particles = [];
+  let touchStart = null;
+  let turnLocked = false;
+
+  bestEl.textContent = best;
+
+  function loadBest() {
+    try {
+      const value = Number(localStorage.getItem("dogSnakeBest"));
+      return Number.isFinite(value) && value > 0 ? value : 0;
+    } catch (_) {
+      return 0;
+    }
+  }
+
+  function saveBest() {
+    try { localStorage.setItem("dogSnakeBest", String(best)); }
+    catch (_) { /* O jogo continua funcionando sem armazenamento disponível. */ }
+  }
+
+  function randomCell() {
+    return {
+      x: Math.floor(Math.random() * CELLS),
+      y: Math.floor(Math.random() * CELLS)
+    };
+  }
+
+  function spawnFood() {
+    const free = [];
+    for (let y = 0; y < CELLS; y++) {
+      for (let x = 0; x < CELLS; x++) {
+        if (!dog.some(part => part.x === x && part.y === y)) free.push({ x, y });
+      }
+    }
+    if (free.length === 0) {
+      winGame();
+      return;
+    }
+    food = free[Math.floor(Math.random() * free.length)];
+  }
+
+  function resetGame() {
+    stopLoop();
+    score = 0;
+    direction = { ...DIRECTIONS.right };
+    nextDirection = { ...DIRECTIONS.right };
+    turnLocked = false;
+    particles = [];
+    dog = [
+      { x: 10, y: 12 },
+      { x: 9, y: 12 },
+      { x: 8, y: 12 }
+    ];
+    spawnFood();
+    scoreEl.textContent = "0";
+    gameState = "ready";
+    pauseBtn.disabled = true;
+    pauseBtn.textContent = "Ⅱ Pausar";
+    draw();
+  }
+
+  function startGame() {
+    if (gameState === "running") return;
+    if (gameState === "over" || gameState === "won") resetGame();
+    hideOverlay();
+    gameState = "running";
+    pauseBtn.disabled = false;
+    pauseBtn.textContent = "Ⅱ Pausar";
+    lastTick = performance.now();
+    stopLoop();
+    timerId = requestAnimationFrame(loop);
+  }
+
+  function stopLoop() {
+    if (timerId !== null) cancelAnimationFrame(timerId);
+    timerId = null;
+  }
+
+  function togglePause() {
+    if (gameState === "running") {
+      gameState = "paused";
+      stopLoop();
+      pauseBtn.textContent = "▶ Continuar";
+      showOverlay("⏸️", "Pausa para carinho!", "Seu cãozinho está descansando. Quando estiver pronto, é só continuar.", "Continuar ▶", startGame);
+      draw();
+    } else if (gameState === "paused") {
+      startGame();
+    } else if (gameState === "ready") {
+      startGame();
+    }
+  }
+
+  function showOverlay(emoji, title, text, buttonText, action) {
+    modalEmoji.textContent = emoji;
+    modalTitle.textContent = title;
+    modalText.textContent = text;
+    startBtn.textContent = buttonText;
+    startBtn.onclick = action;
+    overlay.classList.remove("hidden");
+  }
+
+  function hideOverlay() {
+    overlay.classList.add("hidden");
+    startBtn.onclick = startGame;
+  }
+
+  function endGame() {
+    gameState = "over";
+    stopLoop();
+    pauseBtn.disabled = true;
+    pauseBtn.textContent = "Ⅱ Pausar";
+    showOverlay("🐾", "Ops, acabou!", `Você fez ${score} ${score === 1 ? "ponto" : "pontos"}! Não desanime: seu próximo recorde pode estar pertinho.`, "Jogar novamente ↻", startGame);
+    draw();
+  }
+
+  function winGame() {
+    gameState = "won";
+    stopLoop();
+    pauseBtn.disabled = true;
+    showOverlay("🏆", "Incrível! Você venceu!", `Você encheu o tabuleiro e fez ${score} pontos. Que cãozinho guloso e campeão!`, "Jogar novamente ↻", startGame);
+    draw();
+  }
+
+  function setDirection(name) {
+    if (gameState !== "running" && gameState !== "ready") return;
+    const proposed = DIRECTIONS[name];
+    if (!proposed || turnLocked) return;
+    if (proposed.x === -direction.x && proposed.y === -direction.y) return;
+    nextDirection = { ...proposed };
+    turnLocked = true;
+    if (gameState === "ready") startGame();
+  }
+
+  function speed() {
+    return Math.max(62, 145 - Math.floor(score / 3) * 7);
+  }
+
+  function loop(timestamp) {
+    if (gameState !== "running") {
+      timerId = null;
+      return;
+    }
+    if (timestamp - lastTick >= speed()) {
+      update();
+      lastTick = timestamp;
+      if (gameState !== "running") {
+        timerId = null;
+        return;
+      }
+    }
+    draw();
+    timerId = requestAnimationFrame(loop);
+  }
+
+  function update() {
+    direction = { ...nextDirection };
+    turnLocked = false;
+
+    const head = {
+      x: dog[0].x + direction.x,
+      y: dog[0].y + direction.y
+    };
+
+    if (head.x < 0 || head.y < 0 || head.x >= CELLS || head.y >= CELLS) {
+      endGame();
+      return;
+    }
+
+    const eating = food && head.x === food.x && head.y === food.y;
+    // Ao não crescer, a última parte da cauda sai nesta jogada.
+    // Assim, entrar na posição que ela acabou de liberar é permitido.
+    const bodyToCheck = eating ? dog : dog.slice(0, -1);
+    if (bodyToCheck.some(part => part.x === head.x && part.y === head.y)) {
+      endGame();
+      return;
+    }
+
+    dog.unshift(head);
+
+    if (eating) {
+      score += 1;
+      scoreEl.textContent = score;
+      if (score > best) {
+        best = score;
+        bestEl.textContent = best;
+        saveBest();
+      }
+      makeParticles(food.x, food.y);
+      spawnFood();
+    } else {
+      dog.pop();
+    }
+  }
+
+  function roundedRect(x, y, w, h, r, color) {
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.roundRect(x, y, w, h, r);
+    ctx.fill();
+  }
+
+  function drawBackground() {
+    ctx.fillStyle = "#edf5e6";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Gramado em padrão suave.
+    for (let y = 0; y < CELLS; y++) {
+      for (let x = 0; x < CELLS; x++) {
+        if ((x + y) % 2 === 0) {
+          ctx.fillStyle = "rgba(255,255,255,.22)";
+          ctx.fillRect(x * SIZE, y * SIZE, SIZE, SIZE);
+        }
+      }
+    }
+
+    // Pequenas marcas decorativas de grama.
+    ctx.strokeStyle = "rgba(123,157,104,.19)";
+    ctx.lineWidth = 1.5;
+    for (let i = 0; i < 35; i++) {
+      const x = ((i * 79 + 17) % 575) + 10;
+      const y = ((i * 113 + 31) % 575) + 10;
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x + 3, y - 5);
+      ctx.stroke();
+    }
+  }
+
+  function drawFood() {
+    if (!food) return;
+    const cx = (food.x + .5) * SIZE;
+    const cy = (food.y + .5) * SIZE;
+    const pulse = 1 + Math.sin(performance.now() / 160) * .045;
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.scale(pulse, pulse);
+    ctx.fillStyle = "rgba(98,67,36,.12)";
+    ctx.beginPath();
+    ctx.ellipse(1, 5, 9, 5, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Biscoito com pequenas pintinhas.
+    ctx.fillStyle = "#d98a43";
+    ctx.beginPath();
+    ctx.arc(0, 0, 9.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#f6c77d";
+    ctx.beginPath();
+    ctx.arc(-1, -1, 7, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#c27b39";
+    [[-3,-3],[3,-1],[0,3]].forEach(([x,y]) => {
+      ctx.beginPath();
+      ctx.arc(x, y, 1.2, 0, Math.PI * 2);
+      ctx.fill();
+    });
+    ctx.restore();
+  }
+
+  function drawBodyPart(part, index) {
+    const cx = (part.x + .5) * SIZE;
+    const cy = (part.y + .5) * SIZE;
+    const radius = index === 0 ? 10.2 : 9.1;
+
+    if (index > 0) {
+      ctx.fillStyle = index % 2 === 0 ? "#c98b56" : "#d69a62";
+      ctx.beginPath();
+      ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "#a96f43";
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      // Pequenas manchas no corpo.
+      if (index % 3 === 1) {
+        ctx.fillStyle = "#f1d1a5";
+        ctx.beginPath();
+        ctx.arc(cx - 2, cy - 2, 3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      return;
+    }
+
+    // Cabeça: focinho aponta para a direção do movimento.
+    const angle = Math.atan2(direction.y, direction.x);
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(angle);
+
+    // Orelhas caídas.
+    ctx.fillStyle = "#925b3b";
+    ctx.beginPath();
+    ctx.ellipse(-2, -8, 5, 9, -.3, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(-2, 8, 5, 9, .3, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Cabeça.
+    ctx.fillStyle = "#d99d65";
+    ctx.beginPath();
+    ctx.arc(0, 0, 10.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "#a96f43";
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
+
+    // Focinho.
+    ctx.fillStyle = "#f5dfbd";
+    ctx.beginPath();
+    ctx.ellipse(5, 0, 5.2, 6.2, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Olho visível e nariz.
+    ctx.fillStyle = "#4a3025";
+    ctx.beginPath();
+    ctx.arc(1, -5, 1.7, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(1, 5, 1.7, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(9, 0, 2.4, 2.8, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Coleira.
+    ctx.strokeStyle = "#f07866";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(-1, 0, 9.5, -.45, .45);
+    ctx.stroke();
+
+    ctx.restore();
+  }
+
+  function makeParticles(x, y) {
+    const cx = (x + .5) * SIZE;
+    const cy = (y + .5) * SIZE;
+    const colors = ["#ff9a55", "#f5c85c", "#f58d9b", "#ffffff", "#83b96b"];
+    for (let i = 0; i < 12; i++) {
+      const angle = Math.PI * 2 * i / 12;
+      particles.push({
+        x: cx, y: cy,
+        vx: Math.cos(angle) * (1 + Math.random() * 2),
+        vy: Math.sin(angle) * (1 + Math.random() * 2),
+        life: 1,
+        color: colors[i % colors.length]
+      });
+    }
+  }
+
+  function drawParticles() {
+    particles = particles.filter(p => p.life > 0);
+    for (const p of particles) {
+      p.x += p.vx;
+      p.y += p.vy;
+      p.life -= .055;
+      ctx.globalAlpha = Math.max(0, p.life);
+      ctx.fillStyle = p.color;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 3 * p.life + 1, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function draw() {
+    drawBackground();
+    drawFood();
+    // Desenhar da cauda para a cabeça.
+    for (let i = dog.length - 1; i >= 0; i--) {
+      drawBodyPart(dog[i], i);
+    }
+    drawParticles();
+
+    if (gameState === "paused") {
+      ctx.fillStyle = "rgba(255,255,255,.18)";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+  }
+
+  document.addEventListener("keydown", event => {
+    const key = event.key.toLowerCase();
+    const map = {
+      arrowup: "up", w: "up",
+      arrowdown: "down", s: "down",
+      arrowleft: "left", a: "left",
+      arrowright: "right", d: "right"
+    };
+
+    if (map[key]) {
+      event.preventDefault();
+      if (gameState === "paused") return;
+      setDirection(map[key]);
+    } else if (key === " " || key === "spacebar") {
+      event.preventDefault();
+      togglePause();
+    } else if (key === "enter" && (gameState === "ready" || gameState === "over" || gameState === "won")) {
+      startGame();
+    }
+  });
+
+  document.querySelectorAll("[data-dir]").forEach(button => {
+    button.addEventListener("pointerdown", event => {
+      event.preventDefault();
+      setDirection(button.dataset.dir);
+    });
+  });
+
+  canvas.addEventListener("pointerdown", event => {
+    touchStart = { x: event.clientX, y: event.clientY };
+  });
+
+  canvas.addEventListener("pointerup", event => {
+    if (!touchStart) return;
+    const dx = event.clientX - touchStart.x;
+    const dy = event.clientY - touchStart.y;
+    touchStart = null;
+    if (Math.max(Math.abs(dx), Math.abs(dy)) < 18) return;
+    if (Math.abs(dx) > Math.abs(dy)) {
+      setDirection(dx > 0 ? "right" : "left");
+    } else {
+      setDirection(dy > 0 ? "down" : "up");
+    }
+  });
+
+  canvas.addEventListener("pointercancel", () => { touchStart = null; });
+
+  startBtn.onclick = startGame;
+  pauseBtn.addEventListener("click", togglePause);
+  restartBtn.addEventListener("click", () => {
+    resetGame();
+    startGame();
+  });
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden && gameState === "running") togglePause();
+  });
+
+  resetGame();
+})();
+</script>
+</body>
+</html>
